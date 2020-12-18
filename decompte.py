@@ -102,7 +102,9 @@ def timer():        #timer function
     temps_list = []
     temps_courant = time.time()
     #print(str(fin_en_seconde) +" "+str(temps_courant)+" "+str(noel)+" "+str(temps_courant>noel))
-    if temps_courant>noel :
+    if temps_courant<=noel:
+        in_en_seconde = noel
+    elif temps_courant>noel :
         fin_en_seconde = fin_annee
     elif temps_courant >fin_annee:
         endstr = time.strftime("24 Dec %y",time.gmtime())
