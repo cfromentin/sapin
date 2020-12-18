@@ -10,7 +10,8 @@ import time
 import threading
 endstr = time.strftime("24 Dec %y",time.gmtime())
 end = time.strptime(endstr, "%d %b %y")
-fin_en_seconde = time.mktime(end)
+noel = time.mktime(end)
+fin_en_seconde = noel
 
 yearendstr = time.strftime("31 Dec %y",time.gmtime())
 yearend = time.strptime(yearendstr, "%d %b %y")
@@ -95,12 +96,24 @@ def timer():        #timer function
     global t
     global fin_en_seconde
     global fin_annee
+    global noel
     t = threading.Timer(1.0,timer)      #reset time of timer to 1s
     t.start()                           #Start timing
     temps_list = []
     temps_courant = time.time()
-    if temps_courant>fin_en_seconde :
+    #print(str(fin_en_seconde) +" "+str(temps_courant)+" "+str(noel)+" "+str(temps_courant>noel))
+    if temps_courant>noel :
         fin_en_seconde = fin_annee
+    elif temps_courant >fin_annee:
+        endstr = time.strftime("24 Dec %y",time.gmtime())
+        end = time.strptime(endstr, "%d %b %y")
+        noel = time.mktime(end)
+        fin_en_seconde = noel
+
+        yearendstr = time.strftime("31 Dec %y",time.gmtime())
+        yearend = time.strptime(yearendstr, "%d %b %y")
+        fin_annee = time.mktime(yearend)
+
     tps_date = fin_en_seconde - temps_courant
     
     reste = time.strftime("%j%H%M%S",time.gmtime(tps_date))
