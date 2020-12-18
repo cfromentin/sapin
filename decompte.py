@@ -3,7 +3,7 @@
 # Filename    : StopWatch.py
 # Description : Control 4_Digit_7_Segment_Display by 74HC595
 # Author      : tom fromentin
-# modification: 2018/08/03
+# modification: 2020/12/18
 ########################################################################
 import RPi.GPIO as GPIO
 import time
