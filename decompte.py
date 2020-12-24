@@ -8,13 +8,14 @@
 import RPi.GPIO as GPIO
 import time
 import threading
-endstr = time.strftime("24 Dec %y",time.gmtime())
+annee_prochaine = time.gmtime().tm_year+1
+endstr = time.strftime("25 Dec %y",time.gmtime())
 end = time.strptime(endstr, "%d %b %y")
 noel = time.mktime(end)
 fin_en_seconde = noel
 
-yearendstr = time.strftime("31 Dec %y",time.gmtime())
-yearend = time.strptime(yearendstr, "%d %b %y")
+yearendstr = "01 Jan %d"%(annee_prochaine)
+yearend = time.strptime(yearendstr, "%d %b %Y")
 fin_annee = time.mktime(yearend)
 
 LSBFIRST = 1
@@ -27,6 +28,7 @@ dataPin1   = 18      #DS Pin of 74HC595(Pin14)
 latchPin1  = 16      #ST_CP Pin of 74HC595(Pin12)
 clockPin1 = 12       #SH_CP Pin of 74HC595(Pin11)
 num = (0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90)
+bon_noel = (0x00, 0x80, 0xc0, 0xC8,0xff,0xc8,0xc0,0x86,0xC7)
 digitPin = (11,13,15,19)    # Define the pin of 7-segment display common end
 temps_list = [8,8,8,8,8,8,8,8,8]         # Variable counter, the number will be dislayed by 7-segment display
 second_temps_list = [8,8,8,8,8,8,8,8,8]
@@ -65,6 +67,33 @@ def selectDigit(digit): # Open one of the 7-segment display and close the remain
     GPIO.output(digitPin[1],GPIO.LOW if ((digit&0x04) == 0x04) else GPIO.HIGH)
     GPIO.output(digitPin[2],GPIO.LOW if ((digit&0x02) == 0x02) else GPIO.HIGH)
     GPIO.output(digitPin[3],GPIO.LOW if ((digit&0x01) == 0x01) else GPIO.HIGH)
+    
+def displaynoel():
+    outData(0xff)   #eliminate residual display
+    outData1(0xff)   #eliminate residual display
+    selectDigit(0x01)   #Select the first, and display the single digit
+    outData(bon_noel[4])
+    outData1(bon_noel[8])
+    time.sleep(0.003)   #display duration
+    outData(0xff)
+    outData1(0xff)
+    selectDigit(0x02)   # Select the second, and display the tens digit
+    outData(bon_noel[3])
+    outData1(bon_noel[7])
+    time.sleep(0.003)
+    outData(0xff)
+    outData1(0xff)
+    selectDigit(0x04)   # Select the third, and display the hundreds digit
+    outData(bon_noel[2])
+    outData1(bon_noel[6])
+    time.sleep(0.003)
+    outData(0xff)
+    outData1(0xff)
+    selectDigit(0x08)   # Select the fourth, and display the thousands digit
+    outData(bon_noel[1])
+    outData1(bon_noel[5])
+    time.sleep(0.003)
+
 
 def display(liste):   #display function for 7-segment display
     outData(0xff)   #eliminate residual display
@@ -99,36 +128,47 @@ def timer():        #timer function
     global noel
     t = threading.Timer(1.0,timer)      #reset time of timer to 1s
     t.start()                           #Start timing
-    temps_list = []
     temps_courant = time.time()
-    #print(str(fin_en_seconde) +" "+str(temps_courant)+" "+str(noel)+" "+str(temps_courant>noel))
     if temps_courant<=noel:
-        in_en_seconde = noel
+        fin_en_seconde = noel
     elif temps_courant>noel :
         fin_en_seconde = fin_annee
     elif temps_courant >fin_annee:
-        endstr = time.strftime("24 Dec %y",time.gmtime())
+        endstr = time.strftime("25 Dec %y",time.gmtime())
         end = time.strptime(endstr, "%d %b %y")
-        noel = time.mktime(end)
+        noel = time.mktime(end) 
         fin_en_seconde = noel
+        annee_prochaine = time.gmtime().tm_year+1
 
-        yearendstr = time.strftime("31 Dec %y",time.gmtime())
-        yearend = time.strptime(yearendstr, "%d %b %y")
+        yearendstr = "01 Jan %d"%(annee_prochaine)
+        yearend = time.strptime(yearendstr, "%d %b %Y")
         fin_annee = time.mktime(yearend)
 
     tps_date = fin_en_seconde - temps_courant
+    temps = time.gmtime(tps_date)
+    jour= temps.tm_yday -1
+    heure= temps.tm_hour
+    minute= temps.tm_min
+    seconde= temps.tm_sec
+    #print(str(fin_en_seconde) +" "+str(temps_courant)+" "+str(noel)+" "+str(temps_courant>noel + 24*60*60)+" "+str(temps))
     
-    reste = time.strftime("%j%H%M%S",time.gmtime(tps_date))
+    reste = "%.3d%.2d%.2d%.2d" %(jour,heure,minute,seconde)#("%j%H%M%S",temps)
+    temps_list = []
     for i in reste:
         temps_list.append(int(i))
-        
+
+
 def loop():
     global t
     global counter
     t = threading.Timer(1.0,timer)      #set the timer
     t.start()                           # Start timing
     while True:
-        display(temps_list)                # display the number counter
+        if time.time()<=noel + 24*60*60 and time.time()>noel:
+            displaynoel()
+        else :
+            display(temps_list)                # display the number counter
+        
     
 def destroy():   # When "Ctrl+C" is pressed, the function is executed. 
     global t
@@ -142,5 +182,9 @@ if __name__ == '__main__': # Program starting from here
     try:
         loop()  
     except KeyboardInterrupt:  
+        destroy()
+#    except IndexError:
+#        print(temps_list)
+    finally:
         destroy()
  
