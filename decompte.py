@@ -29,7 +29,7 @@ latchPin1 = 16  # ST_CP Pin of 74HC595(Pin12)
 clockPin1 = 12  # SH_CP Pin of 74HC595(Pin11)
 num = (0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90)
 bon_noel = (0xff, 0x80, 0xc0, 0xC8, 0xff, 0xc8, 0xc0, 0x86, 0xC7, 0x88)
-bonne_annee = (0xff, 0x80, 0xc0, 0xc8, 0xc8, 0x86, 0xff, 0x88, 0xc8,0xc8, 0x86, 0x86)
+bonne_annee = [0xff, 0x80, 0xc0, 0xc8, 0xc8, 0x86, 0xff, 0x88, 0xc8,0xc8, 0x86, 0x86]
 liste_afficher = bon_noel
 digitPin = (11, 13, 15, 19)  # Define the pin of 7-segment display common end
 temps_list = [8, 8, 8, 8, 8, 8, 8, 8, 8]  # Variable counter, the number will be dislayed by 7-segment display
@@ -79,6 +79,7 @@ def selectDigit(
 
 
 def displaynoel():
+    global liste_afficher
     outData(0xff)  # eliminate residual display
     outData1(0xff)  # eliminate residual display
     selectDigit(0x01)  # Select the first, and display the single digit
@@ -140,20 +141,19 @@ def timer():  # timer function
     global noel
     global bonne_annee
     global liste_afficher
-    t = threading.Timer(1.0, timer)  # reset time of timer to 1s
+    t = threading.Timer(0.5, timer)  # reset time of timer to 0.5s
     t.start()  # Start timing
     temps_courant = time.time()
     if temps_courant <= noel:
         fin_en_seconde = noel
     elif temps_courant <= noel + 24 * 60 * 60:
         liste_afficher = bon_noel
-    elif temps_courant > noel + 24 * 60 * 60:
-        fin_en_seconde = fin_annee
     elif temps_courant <= fin_annee + 24 * 60 * 60:
+        fin_en_seconde = fin_annee
         liste_afficher = bonne_annee
         bonne_annee.insert(len(bonne_annee), bonne_annee[0])
         bonne_annee.pop(0)
-    elif temps_courant > fin_annee + 24 * 60 * 60:
+    else:
         endstr = time.strftime("25 Dec %y", time.gmtime())
         end = time.strptime(endstr, "%d %b %y")
         noel = time.mktime(end)
@@ -181,7 +181,7 @@ def timer():  # timer function
 def loop():
     global t
     global counter
-    t = threading.Timer(1.0, timer)  # set the timer
+    t = threading.Timer(0.5, timer)  # set the timer
     t.start()  # Start timing
     while True:
         if (time.time() <= noel + 24 * 60 * 60 and time.time() > noel) or\
