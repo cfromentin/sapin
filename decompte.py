@@ -14,9 +14,21 @@ end = time.strptime(endstr, "%d %b %y")
 noel = time.mktime(end)
 fin_en_seconde = noel
 
-yearendstr = "01 Jan %d" % (annee_prochaine)
+yearendstr = time.strftime("01 Jan %Y", time.gmtime())
 yearend = time.strptime(yearendstr, "%d %b %Y")
 fin_annee = time.mktime(yearend)
+
+if fin_annee + 24 * 60 * 60< time.time():
+    yearendstr = "01 Jan %d" % (annee_prochaine)
+    yearend = time.strptime(yearendstr, "%d %b %Y")
+    fin_annee = time.mktime(yearend)
+elif fin_annee < time.time():
+    fin_en_seconde = fin_annee
+    annee_precedente = time.gmtime().tm_year - 1
+    endstr = "25 Dec %d" % (annee_precedente)
+    end = time.strptime(endstr, "%d %b %Y")
+    noel = time.mktime(end)
+
 
 LSBFIRST = 1
 MSBFIRST = 2
@@ -146,9 +158,9 @@ def timer():  # timer function
     temps_courant = time.time()
     if temps_courant <= noel:
         fin_en_seconde = noel
-    elif temps_courant <= noel + 24 * 60 * 60:
+    elif temps_courant <= noel + 24 * 60 * 60 and  temps_courant > noel :
         liste_afficher = bon_noel
-    elif temps_courant <= fin_annee + 24 * 60 * 60:
+    elif temps_courant <= fin_annee + 24 * 60 * 60 and temps_courant > fin_annee:
         fin_en_seconde = fin_annee
         liste_afficher = bonne_annee
         bonne_annee.insert(len(bonne_annee), bonne_annee[0])
